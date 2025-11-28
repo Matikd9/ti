@@ -116,9 +116,6 @@ export default function Page() {
   const canResolve = roleDetails.permissions.includes("resolve");
   const canExport = roleDetails.permissions.includes("export");
 
-  useEffect(() => {
-    setShowAllRows(false);
-  }, [statsSource]);
 
   return (
     <main className="min-h-screen">
