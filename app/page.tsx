@@ -149,8 +149,8 @@ export default function Page() {
                   <ConnectionRow label="Destino DB" value="MongoDB · detections" />
                 </div>
                 <div className="mt-5 space-y-2 text-xs text-slate-400">
-                  <p>1) En Ubuntu abre Blueman → “Set up new device”, selecciona HC-05 (PIN 1234).</p>
-                  <p>2) Una vez emparejado, clic derecho → “Connect to → Serial Port” para obtener /dev/rfcommX.</p>
+                  <p>1) En Ubuntu abre Blueman → &ldquo;Set up new device&rdquo;, selecciona HC-05 (PIN 1234).</p>
+                  <p>2) Una vez emparejado, clic derecho → &ldquo;Connect to → Serial Port&rdquo; para obtener /dev/rfcommX.</p>
                   <p>3) Tu script Node lee ese puerto, envía POST /api/detections y MongoDB guarda la traza.</p>
                   <p>4) Configura tu sketch con distancia normal {baselineDistanceCm} cm y ruido ±{sensorNoiseCm} cm para que coincida con el panel.</p>
                   <p>5) El dashboard consulta Mongo cada segundo y muestra el histórico.</p>
@@ -166,7 +166,7 @@ export default function Page() {
                 </div>
                 <p className="mt-4 text-xs text-slate-400">
                   Se asume una distancia normal de {baselineDistanceCm} cm y un ruido aceptable de ±{sensorNoiseCm} cm. Profundidades mayores a
-                  {severityThresholds.high} cm respecto a esa referencia se marcan como “Alta”. Ajusta <code>distancia_normal</code> si tu maqueta difiere.
+                  {severityThresholds.high} cm respecto a esa referencia se marcan como &ldquo;Alta&rdquo;. Ajusta <code>distancia_normal</code> si tu maqueta difiere.
                 </p>
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function Page() {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-slate-400">Si el monitor serie imprime "BACHE 3.4", se replica aquí.</p>
+              <p className="mt-3 text-xs text-slate-400">Si el monitor serie imprime &quot;BACHE 3.4&quot;, se replica aquí.</p>
             </div>
 
             <div className="card-surface col-span-2 rounded-3xl p-6">
