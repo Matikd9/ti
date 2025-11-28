@@ -161,7 +161,7 @@ export default function Page() {
                 </table>
               </div>
               <p className="mt-3 text-xs text-slate-400">
-                Reemplaza el arreglo superior con tu salida real del puente Node/Serial. Cada fila corresponde a una línea "BACHE <profundidad>" que
+                Reemplaza el arreglo superior con tu salida real del puente Node/Serial. Cada fila corresponde a una línea "BACHE &lt;profundidad&gt;" que
                 envía el Arduino cuando el sensor detecta un hueco.
               </p>
             </div>
@@ -175,7 +175,7 @@ export default function Page() {
                 <div className="mt-4 space-y-3 text-sm text-slate-200">
                   <ConnectionRow label="Puerto" value="/dev/rfcomm0 (o COMx)" />
                   <ConnectionRow label="Baudrate" value="9600" />
-                  <ConnectionRow label="Formato" value="Línea: 'BACHE <profundidad>'" />
+                  <ConnectionRow label="Formato" value="Línea: 'BACHE &lt;profundidad&gt;'" />
                   <ConnectionRow label="Parser" value="serialport + ReadlineParser" />
                 </div>
                 <div className="mt-5 space-y-2 text-xs text-slate-400">
