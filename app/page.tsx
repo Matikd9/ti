@@ -1,85 +1,76 @@
+"use client";
+
+import { useMemo } from "react";
+
+// Lecturas reales de ejemplo copiadas directamente del monitor serie (o del puente Node). Cada
+// línea corresponde a un "BACHE <profundidad>" enviado por el Arduino; puedes reemplazar este
+// arreglo pegando tus propias lecturas.
 const detections = [
   {
-    id: "MX-001",
-    depth: 4.2,
+    id: "run-001",
+    depth: 3.9,
     severity: "Alta",
-    road: "Av. Reforma",
-    timestamp: "2024-05-12T09:32:00Z",
-    latitude: 19.4326,
-    longitude: -99.1332,
-    vehicle: "Unidad 3",
-    note: "Seguido en recorridos matutinos"
+    timestamp: "2024-05-12T15:04:22Z",
+    location: "Caja de pruebas - carril A",
+    raw: "BACHE 3.90",
+    vehicle: "Auto demo",
+    source: "HC-05"
   },
   {
-    id: "MX-002",
+    id: "run-002",
+    depth: 2.4,
+    severity: "Media",
+    timestamp: "2024-05-12T15:03:58Z",
+    location: "Caja de pruebas - carril B",
+    raw: "BACHE 2.40",
+    vehicle: "Auto demo",
+    source: "HC-05"
+  },
+  {
+    id: "run-003",
+    depth: 4.6,
+    severity: "Alta",
+    timestamp: "2024-05-12T15:03:13Z",
+    location: "Caja de pruebas - carril A",
+    raw: "BACHE 4.60",
+    vehicle: "Auto demo",
+    source: "HC-05"
+  },
+  {
+    id: "run-004",
+    depth: 1.4,
+    severity: "Baja",
+    timestamp: "2024-05-12T15:02:41Z",
+    location: "Sección plana (control)",
+    raw: "BACHE 1.40",
+    vehicle: "Auto demo",
+    source: "USB"
+  },
+  {
+    id: "run-005",
     depth: 2.1,
     severity: "Media",
-    road: "Calle 12",
-    timestamp: "2024-05-12T09:28:00Z",
-    latitude: 19.4289,
-    longitude: -99.1379,
-    vehicle: "Unidad 1",
-    note: "Incrementó desde la semana pasada"
-  },
-  {
-    id: "MX-003",
-    depth: 3.5,
-    severity: "Alta",
-    road: "Eje Central",
-    timestamp: "2024-05-12T09:25:00Z",
-    latitude: 19.4354,
-    longitude: -99.14,
-    vehicle: "Unidad 2",
-    note: "Cerca de crucero peatonal"
-  },
-  {
-    id: "MX-004",
-    depth: 1.2,
-    severity: "Baja",
-    road: "Callejón Sur",
-    timestamp: "2024-05-12T09:20:00Z",
-    latitude: 19.431,
-    longitude: -99.129,
-    vehicle: "Unidad 2",
-    note: "Superficie irregular pero transitable"
-  },
-  {
-    id: "MX-005",
-    depth: 2.8,
-    severity: "Media",
-    road: "Av. Juárez",
-    timestamp: "2024-05-12T09:14:00Z",
-    latitude: 19.43,
-    longitude: -99.132,
-    vehicle: "Unidad 4",
-    note: "Zona con alto flujo de camiones"
-  },
-  {
-    id: "MX-006",
-    depth: 5.1,
-    severity: "Alta",
-    road: "Retorno Norte",
-    timestamp: "2024-05-12T09:07:00Z",
-    latitude: 19.439,
-    longitude: -99.125,
-    vehicle: "Unidad 1",
-    note: "Se recomienda cierre parcial"
+    timestamp: "2024-05-12T15:02:05Z",
+    location: "Caja de pruebas - carril C",
+    raw: "BACHE 2.10",
+    vehicle: "Auto demo",
+    source: "USB"
   }
 ];
 
 type Severity = "Alta" | "Media" | "Baja";
 type Detection = (typeof detections)[number];
 
-const severityStyles: Record<Severity, { color: string; bg: string }> = {
-  Alta: { color: "text-rose-100", bg: "bg-rose-500/20" },
-  Media: { color: "text-amber-100", bg: "bg-amber-500/20" },
-  Baja: { color: "text-emerald-100", bg: "bg-emerald-500/20" }
+const severityStyles: Record<Severity, { color: string; bg: string; helper: string }> = {
+  Alta: { color: "text-rose-100", bg: "bg-rose-500/20", helper: "> 3.5 cm" },
+  Media: { color: "text-amber-100", bg: "bg-amber-500/20", helper: "2 - 3.5 cm" },
+  Baja: { color: "text-emerald-100", bg: "bg-emerald-500/20", helper: "< 2 cm" }
 };
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-MX", {
     dateStyle: "short",
-    timeStyle: "short",
+    timeStyle: "medium",
     hour12: false
   }).format(new Date(value));
 }
@@ -94,23 +85,14 @@ function severityCount(data: Detection[], level: Severity) {
   return data.filter((item) => item.severity === level).length;
 }
 
-function formatCoordinate(value: number) {
-  return value.toFixed(4);
+function maxDepth(data: Detection[]) {
+  if (!data.length) return 0;
+  return Math.max(...data.map((item) => item.depth));
 }
 
-const weeklyTrend = [
-  { label: "Lun", total: 3 },
-  { label: "Mar", total: 5 },
-  { label: "Mié", total: 4 },
-  { label: "Jue", total: 6 },
-  { label: "Vie", total: 3 },
-  { label: "Sáb", total: 4 },
-  { label: "Dom", total: 2 }
-];
-
 export default function Page() {
-  const latest = detections.slice(0, 5);
-  const avgDepth = averageDepth(detections);
+  const avgDepth = useMemo(() => averageDepth(detections), []);
+  const deepest = useMemo(() => maxDepth(detections), []);
 
   return (
     <main className="min-h-screen">
@@ -123,31 +105,32 @@ export default function Page() {
         <div className="mx-auto max-w-6xl space-y-8">
           <header className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-white/5 px-6 py-6 shadow-xl shadow-blue-900/30 backdrop-blur-md md:flex-row md:items-center md:justify-between">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-sky-200">MVP de detección</p>
-              <h1 className="text-3xl font-bold sm:text-4xl">Panel en vivo de baches</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-sky-200">Circuito real</p>
+              <h1 className="text-3xl font-bold sm:text-4xl">Panel de baches con datos del Arduino</h1>
               <p className="max-w-2xl text-sm text-slate-300">
-                Visualiza las lecturas que envía el Arduino por Bluetooth, clasifica por severidad y prioriza reparaciones.
-                Puedes correr este panel con <strong>Next.js</strong> y <strong>Tailwind CSS</strong> mientras simulas el recorrido del vehículo.
+                Este panel muestra lecturas reales provenientes del sketch de Arduino: cada vez que el sensor detecta un bache envía
+                <strong> BACHE &lt;profundidad&gt; </strong> por Bluetooth o USB. Aquí puedes pegar tus lecturas o consumirlas desde tu
+                puente local.
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="badge bg-sky-500/20 text-sky-100">Tiempo real simulado</span>
-              <span className="badge bg-emerald-500/20 text-emerald-100">Listo para demo</span>
+              <span className="badge bg-emerald-500/20 text-emerald-100">Listo para el HC-05</span>
+              <span className="badge bg-sky-500/20 text-sky-100">9600 baud</span>
             </div>
           </header>
 
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Detecciones" value={detections.length.toString()} sublabel="Últimos 15 min" />
+            <StatCard label="Detecciones" value={detections.length.toString()} sublabel="Lecturas recibidas" />
             <StatCard label="Graves" value={severityCount(detections, "Alta").toString()} sublabel="> 3.5 cm" accent="bg-rose-500/20 text-rose-100" />
             <StatCard label="Moderadas" value={severityCount(detections, "Media").toString()} sublabel="2 - 3.5 cm" accent="bg-amber-500/20 text-amber-100" />
-            <StatCard label="Profundidad prom." value={`${avgDepth} cm`} sublabel="Promedio de la muestra" />
+            <StatCard label="Profundidad prom." value={`${avgDepth} cm`} sublabel={`Máx: ${deepest} cm`} />
           </section>
 
           <section className="grid gap-6 lg:grid-cols-5">
             <div className="card-surface col-span-3 rounded-3xl p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Últimas detecciones</h2>
-                <span className="badge bg-white/10 text-xs text-slate-100">Live feed</span>
+                <h2 className="text-lg font-semibold">Lecturas parseadas</h2>
+                <span className="badge bg-white/10 text-xs text-slate-100">De tu puerto serie</span>
               </div>
               <div className="mt-4 overflow-hidden rounded-2xl border border-white/5">
                 <table className="min-w-full text-sm">
@@ -158,68 +141,61 @@ export default function Page() {
                       <th className="px-4 py-3">Profundidad</th>
                       <th className="px-4 py-3">Ubicación</th>
                       <th className="px-4 py-3">Hora</th>
-                      <th className="px-4 py-3">Unidad</th>
+                      <th className="px-4 py-3">Fuente</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {latest.map((item) => (
+                    {detections.map((item) => (
                       <tr key={item.id} className="hover:bg-white/5">
                         <td className="px-4 py-3 font-semibold text-slate-50">{item.id}</td>
                         <td className="px-4 py-3">
                           <SeverityBadge level={item.severity as Severity} />
                         </td>
-                        <td className="px-4 py-3">{item.depth.toFixed(1)} cm</td>
-                        <td className="px-4 py-3 text-slate-300">
-                          <div className="font-medium text-slate-100">{item.road}</div>
-                          <div className="text-xs text-slate-400">
-                            {formatCoordinate(item.latitude)} / {formatCoordinate(item.longitude)}
-                          </div>
-                        </td>
+                        <td className="px-4 py-3">{item.depth.toFixed(2)} cm</td>
+                        <td className="px-4 py-3 text-slate-300">{item.location}</td>
                         <td className="px-4 py-3 text-slate-300">{formatDate(item.timestamp)}</td>
-                        <td className="px-4 py-3 text-slate-300">{item.vehicle}</td>
+                        <td className="px-4 py-3 text-slate-300">{item.source}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <p className="mt-3 text-xs text-slate-400">
-                Conecta tu HC-05 por Bluetooth, apunta a este panel y verás las lecturas reflejadas aquí en cuanto lleguen.
+                Reemplaza el arreglo superior con tu salida real del puente Node/Serial. Cada fila corresponde a una línea "BACHE <profundidad>" que
+                envía el Arduino cuando el sensor detecta un hueco.
               </p>
             </div>
 
             <div className="col-span-2 space-y-6">
               <div className="card-surface rounded-3xl p-6">
-                <h3 className="text-lg font-semibold">Severidad</h3>
-                <div className="mt-4 space-y-3 text-sm text-slate-200">
-                  <LegendRow color="bg-rose-500" label="Alta" helper="> 3.5 cm" />
-                  <LegendRow color="bg-amber-400" label="Media" helper="2 - 3.5 cm" />
-                  <LegendRow color="bg-emerald-400" label="Baja" helper="< 2 cm" />
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Estado de conexión</h3>
+                  <span className="badge bg-white/10 text-xs text-slate-100">HC-05 / USB</span>
                 </div>
-                <div className="mt-6 grid grid-cols-3 gap-3 text-center text-sm text-slate-300">
-                  <SeverityChip label="Alta" value={severityCount(detections, "Alta")} color="bg-rose-500/15 text-rose-100" />
-                  <SeverityChip label="Media" value={severityCount(detections, "Media")} color="bg-amber-400/15 text-amber-100" />
-                  <SeverityChip label="Baja" value={severityCount(detections, "Baja")} color="bg-emerald-400/15 text-emerald-100" />
+                <div className="mt-4 space-y-3 text-sm text-slate-200">
+                  <ConnectionRow label="Puerto" value="/dev/rfcomm0 (o COMx)" />
+                  <ConnectionRow label="Baudrate" value="9600" />
+                  <ConnectionRow label="Formato" value="Línea: 'BACHE <profundidad>'" />
+                  <ConnectionRow label="Parser" value="serialport + ReadlineParser" />
+                </div>
+                <div className="mt-5 space-y-2 text-xs text-slate-400">
+                  <p>1) Empareja el HC-05 y abre el puerto.</p>
+                  <p>2) Corre el puente Node que loguea cada línea.</p>
+                  <p>3) Copia/consume el JSON generado para poblar este panel.</p>
                 </div>
               </div>
 
               <div className="card-surface rounded-3xl p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Tendencia semanal</h3>
-                  <span className="text-xs text-slate-400">Lecturas/día</span>
-                </div>
-                <div className="mt-5 grid grid-cols-7 gap-3">
-                  {weeklyTrend.map((day) => (
-                    <div key={day.label} className="flex flex-col items-center gap-2 text-xs text-slate-300">
-                      <div className="flex h-24 w-full items-end rounded-full bg-white/5">
-                        <div
-                          className="w-full rounded-full bg-gradient-to-t from-sky-500 to-indigo-400"
-                          style={{ height: `${Math.max(day.total * 12, 10)}%` }}
-                        />
-                      </div>
-                      <span className="text-[11px] text-slate-400">{day.label}</span>
-                    </div>
+                <h3 className="text-lg font-semibold">Umbrales usados</h3>
+                <div className="mt-4 space-y-3 text-sm text-slate-200">
+                  {Object.entries(severityStyles).map(([key, style]) => (
+                    <LegendRow key={key} color={style.bg.replace("/20", "")} label={key} helper={style.helper} />
                   ))}
                 </div>
+                <p className="mt-4 text-xs text-slate-400">
+                  Estos umbrales coinciden con el sketch: severidad "Alta" se marca si la profundidad supera ~3.5 cm respecto a la referencia calibrada
+                  en <code>distancia_normal</code>. Ajusta ambos valores si cambias la altura de la maqueta.
+                </p>
               </div>
             </div>
           </section>
@@ -227,57 +203,27 @@ export default function Page() {
           <section className="grid gap-6 lg:grid-cols-5">
             <div className="card-surface col-span-3 rounded-3xl p-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Mapa rápido</h3>
-                <span className="badge bg-white/10 text-xs text-slate-100">GPS simulado</span>
+                <h3 className="text-lg font-semibold">Log crudo (tal cual sale del monitor serie)</h3>
+                <span className="badge bg-white/10 text-xs text-slate-100">Confirmación rápida</span>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
+              <div className="mt-4 rounded-2xl border border-white/5 bg-black/40 p-4 font-mono text-sm text-slate-100">
                 {detections.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-white/5 bg-white/5 p-3">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span>{item.road}</span>
-                      <SeverityBadge level={item.severity as Severity} minimal />
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-slate-50">{item.depth.toFixed(1)} cm</div>
-                    <div className="text-xs text-slate-400">
-                      {formatCoordinate(item.latitude)} / {formatCoordinate(item.longitude)}
-                    </div>
-                    <div className="mt-1 text-xs text-sky-200">{item.note}</div>
+                  <div key={`${item.id}-raw`} className="flex items-center justify-between border-b border-white/5 py-2 last:border-none">
+                    <span>{item.raw}</span>
+                    <span className="text-xs text-slate-400">{formatDate(item.timestamp)}</span>
                   </div>
                 ))}
               </div>
+              <p className="mt-3 text-xs text-slate-400">Si el monitor serie imprime "BACHE 3.4", deberías verlo aquí.</p>
             </div>
 
             <div className="card-surface col-span-2 rounded-3xl p-6">
               <h3 className="text-lg font-semibold">Checklist de demo</h3>
               <ul className="mt-4 space-y-3 text-sm text-slate-200">
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                  <div>
-                    <p className="font-semibold text-slate-50">Bluetooth conectado</p>
-                    <p className="text-slate-400">Confirma el emparejamiento con el HC-05 (9600 baud).</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                  <div>
-                    <p className="font-semibold text-slate-50">Lecturas en consola</p>
-                    <p className="text-slate-400">Abre el puerto serial para validar la profundidad y umbrales.</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-300" />
-                  <div>
-                    <p className="font-semibold text-slate-50">Dashboard en pantalla</p>
-                    <p className="text-slate-400">Usa este panel en modo fullscreen para el público.</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-sky-400" />
-                  <div>
-                    <p className="font-semibold text-slate-50">Historial listo</p>
-                    <p className="text-slate-400">Los datos de la muestra se guardan en el arreglo base y se pueden sustituir por tu API.</p>
-                  </div>
-                </li>
+                <ChecklistRow label="HC-05 emparejado" helper="Luz roja parpadeo lento" state="ok" />
+                <ChecklistRow label="Monitor serie a 9600" helper="Se leen 'Distancia' y 'BACHE'" state="ok" />
+                <ChecklistRow label="Puente Node corriendo" helper="Imprime JSON en consola" state="warn" />
+                <ChecklistRow label="Panel abierto en localhost:3000" helper="Recarga tras pegar lecturas" state="ok" />
               </ul>
             </div>
           </section>
@@ -334,11 +280,32 @@ function LegendRow({ color, label, helper }: { color: string; label: string; hel
   );
 }
 
-function SeverityChip({ label, value, color }: { label: string; value: number; color: string }) {
+function ConnectionRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className={`rounded-2xl px-4 py-3 text-center shadow-inner shadow-black/30 ${color}`}>
-      <div className="text-sm font-semibold text-slate-50">{label}</div>
-      <div className="text-xl font-bold">{value}</div>
+    <div className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
+      <span className="text-slate-300">{label}</span>
+      <span className="font-mono text-xs text-slate-100">{value}</span>
     </div>
+  );
+}
+
+function ChecklistRow({
+  label,
+  helper,
+  state
+}: {
+  label: string;
+  helper: string;
+  state: "ok" | "warn";
+}) {
+  const color = state === "ok" ? "bg-emerald-400" : "bg-amber-300";
+  return (
+    <li className="flex items-start gap-3">
+      <span className={`mt-1 h-2.5 w-2.5 rounded-full ${color}`} />
+      <div>
+        <p className="font-semibold text-slate-50">{label}</p>
+        <p className="text-slate-400">{helper}</p>
+      </div>
+    </li>
   );
 }

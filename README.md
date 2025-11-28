@@ -100,7 +100,7 @@ El flujo se puede replicar en vehículos municipales (basureros, patrullas, etc.
 - **Mapa rápido:** usa un cuadriculado impreso (calles) y simula posiciones del auto; cada bache detectado se pinta en la cuadrícula para ilustrar cómo se vería un mapa municipal.
 
 ## 9. Panel web (Next.js + Tailwind)
-Se incluye una página en `app/page.tsx` construida con Next.js 14 y Tailwind CSS para visualizar las detecciones en tiempo real.
+Se incluye una página en `app/page.tsx` construida con Next.js 14 y Tailwind CSS para visualizar las detecciones reales que envía el Arduino.
 
 ### Cómo ejecutar
 1. Instala dependencias: `npm install`.
@@ -108,12 +108,14 @@ Se incluye una página en `app/page.tsx` construida con Next.js 14 y Tailwind CS
 3. Abre `http://localhost:3000` y deja visible el panel durante la demo.
 
 ### Qué muestra
-- Tarjetas con totales, promedio de profundidad y conteo por severidad.
-- Tabla con las últimas detecciones (ID, severidad, profundidad y ubicación GPS simulada).
-- Tendencia semanal con barras y un mosaico “Mapa rápido” que ayuda a explicar la georreferenciación.
-- Checklist de demo para guiar la presentación.
+- Tarjetas con totales, promedio de profundidad y el máximo registrado.
+- Tabla con las lecturas parseadas directamente de líneas `BACHE <profundidad>`.
+- Estado de conexión (puerto, baudrate y parser usado) alineado con el puente Node/Serial.
+- Umbrales usados en el sketch para clasificar severidad.
+- Log crudo tal cual sale del monitor serie, para confirmar que lo que imprime el Arduino aparece en el panel.
+- Checklist de demo con los pasos reales para que el público vea la lectura en vivo.
 
-Para conectar datos reales, reemplaza el arreglo `detections` en `app/page.tsx` por la respuesta de tu backend o del puerto Serial/Bluetooth.
+Para conectar datos reales, reemplaza el arreglo `detections` en `app/page.tsx` pegando las líneas que entrega tu puente Node/Serial, o modifica la página para leer de un endpoint local que exponga los objetos JSON `{ id, depth, severity, timestamp, location, raw, source }`.
 
 ## 10. Qué hacer con el Arduino y cómo usar el panel
 
