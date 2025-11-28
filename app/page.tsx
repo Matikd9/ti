@@ -724,8 +724,12 @@ function useDetectionFeed() {
         setError(null);
       } catch (err) {
         if (!active) return;
+        const message = (err as Error).message;
+        if (message === "The operation was aborted." || (err as DOMException)?.name === "AbortError") {
+          return;
+        }
         setStatus("error");
-        setError((err as Error).message);
+        setError(message);
       }
     };
 
