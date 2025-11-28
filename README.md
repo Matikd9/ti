@@ -114,3 +114,41 @@ Se incluye una página en `app/page.tsx` construida con Next.js 14 y Tailwind CS
 - Checklist de demo para guiar la presentación.
 
 Para conectar datos reales, reemplaza el arreglo `detections` en `app/page.tsx` por la respuesta de tu backend o del puerto Serial/Bluetooth.
+
+## 10. Qué hacer con el Arduino y cómo usar el panel
+
+### A. Cargar y probar el Arduino
+1) Conecta el HC-SR04 y el HC-05 como se indica en la sección 3.
+2) Abre el IDE de Arduino, pega el sketch de la sección 5 y súbelo a la placa.
+3) Conecta el Arduino por USB, abre el monitor serie a **9600 baudios** y revisa que ves líneas como `Distancia: 5.1` y, cuando hay bache, `BACHE <profundidad>`.
+4) Ajusta `distancia_normal` y `umbral_bache` si tu superficie de prueba es más alta/baja.
+
+### B. Preparar el Bluetooth
+1) Enciende el HC-05, empareja con tu laptop y anota el puerto/COM asignado (ej. `/dev/rfcomm0` o `COM7`).
+2) Si no usas Bluetooth, puedes leer por USB Serial sin cambios.
+
+### C. Conectar con el panel web
+1) Arranca el panel (`npm run dev`) y déjalo abierto en el navegador.
+2) Crea un puente rápido para leer el puerto serie y generar un JSON consumible por el panel. Ejemplo con Node:
+   ```bash
+   npm install serialport
+   cat > serial-bridge.js <<'EOF'
+   import { SerialPort, ReadlineParser } from "serialport";
+
+   const port = new SerialPort({ path: process.env.SERIAL_PORT || "/dev/rfcomm0", baudRate: 9600 });
+   const parser = port.pipe(new ReadlineParser({ delimiter: "\n" }));
+
+   parser.on("data", (line) => {
+     // Espera líneas tipo "BACHE 3.4"
+     if (line.startsWith("BACHE")) {
+       const depth = Number(line.split(" ")[1]);
+       console.log(JSON.stringify({ id: Date.now(), depth, severity: depth > 3.5 ? "Alta" : depth > 2 ? "Media" : "Baja", timestamp: new Date().toISOString() }));
+     }
+   });
+   EOF
+   node serial-bridge.js
+   ```
+3) Copia los JSON que imprime el puente y pégalos en el array `detections` de `app/page.tsx`, o modifica esa página para consumir un endpoint/local file según tu preferencia.
+4) Cada vez que añadas una lectura, recarga el panel para verla reflejada. Para un flujo continuo, puedes exponer un endpoint en `app/api` que entregue el arreglo actualizado y en el panel cambiar el arreglo estático por una llamada `fetch` en un componente cliente.
+
+Con estos pasos tienes el circuito completo: el Arduino detecta y envía, el puente lee y normaliza, y el panel Next.js muestra los datos durante la demo.
